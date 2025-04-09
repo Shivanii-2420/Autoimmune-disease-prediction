@@ -1,0 +1,63 @@
+# Import necessary libraries
+import numpy as np  # for linear algebra
+import pandas as pd  # for data processing
+import matplotlib.pyplot as plt  # for data visualization
+import seaborn as sns  # for statistical data visualization
+%matplotlib inline
+import warnings
+
+warnings.filterwarnings('ignore')
+
+# Load dataset
+data = '/kaggle/input/adult-dataset/adult.csv'
+df = pd.read_csv(data, header=None, sep=',\s', engine='python')
+
+# Assign column names (as the dataset has no headers)
+df.columns = [
+    'age', 'workclass', 'fnlwgt', 'education', 'education-num',
+    'marital-status', 'occupation', 'relationship', 'race', 'sex',
+    'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'income'
+]
+
+# Display first 5 rows
+print(df.head())
+
+# Preprocessing: remove rows with missing values (represented as '?')
+df.replace('?', np.nan, inplace=True)
+df.dropna(inplace=True)
+
+# Encode categorical variables using Label Encoding
+from sklearn.preprocessing import LabelEncoder
+
+for column in df.select_dtypes(include=['object']).columns:
+    le = LabelEncoder()
+    df[column] = le.fit_transform(df[column])
+
+# Split the dataset into features and target
+X = df.drop('income', axis=1)
+y = df['income']
+
+# Split into training and testing data
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Apply Naive Bayes
+from sklearn.naive_bayes import GaussianNB
+
+nb_model = GaussianNB()
+nb_model.fit(X_train, y_train)
+
+# Predict on test data
+y_pred = nb_model.predict(X_test)
+
+# Evaluate the model
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d')
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
